@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static  'app/css/styles.css' %}">
+
+</head>
+
+<body>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <script src="{% static 'app/css/myscripts.js' %}"></script>
+
+
+    <div class="container">
+        <div class="row clearfix">
+            <div class="col-lg-12">
+                <div class="card chat-app">
+                    <div id="plist" class="people-list">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-search"></i></span>
+                            </div>
+                            <input type="text" class="form-control" placeholder="Search...">
+                        </div>
+                        <p>All user details</p>
+                        <ul class="list-unstyled chat-list mt-2 mb-0">
+                            {% for i in user %}
+                            <li class="clearfix active">
+
+                                <div class="about">
+                                    <div class="name">{{i.username}}</div>
+                                    <div class="status"> <i class="fa fa-circle online"></i> {{i.status}} </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="chat">
+                        <div class="chat-header clearfix">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <a href="javascript:void(0);" data-toggle="modal" data-target="#view_info">
+                                        <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                                    </a>
+                                    <div class="chat-about">
+                                        <h6 class="m-b-0">{{user1}}</h6>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="chat-history">
+                            <ul class="m-b-0">
+                                <li class="clearfix">
+                                    <div id="chat1" class="message other-message float-left">
+                                        <p class="pag"></p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <p id="send2">Send Image </p>
+                        <input type="file"  id="image" placeholder="send image" accept="image/*">
+                        <p> Send Video</p>
+                          <input type="file" value="" id="video" placeholder="send video" accept="video/*">
+                        <div class="chat-message clearfix">
+                            <div class="input-group mb-0">
+                                <div class="input-group-prepend">
+                                    <input id="chat-message-submit" type="button" value="send"
+                                        class="input-group-text"></input>
+                                </div>
+                                <input id="chat-message-input" type="text" class="form-control"
+                                    placeholder="Enter text here...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input id="current_id" type="hidden" value="{{current_user_id}}">
+        </div>
+    </div>
+    {{ room_name|json_script:"room-name" }}
+
+    <script>
+    document.getElementById("send2").style.margin = "25px";
+        const username = JSON.parse(document.getElementById('room-name').textContent);
+        const url = 'ws://127.0.0.1:8000/ws' + window.location.pathname;
+        console.log(url);
+        const chatSocket = new WebSocket(
+            url
+        );
+        chatSocket.onmessage = function (e) {
+            const name = document.querySelector('#current_id');
+            var id2 = name.value;
+            const data = JSON.parse(e.data);
+            var id = data.id
+
+            if (id2 == id) {
+                for (const [value] of Object.entries(e)) {
+                    document.querySelector('#chat1').className = "message other-message  float-left";
+                    var div = document.getElementsByClassName('message other-message  float-left')
+                    document.getElementsByClassName('pag')[0].innerHTML += (data.message + '\n');
+                    var btn = document.createElement("input");
+                    btn.type="video"
+                    btn.className="video1"
+                    var image=document.createElement("input");
+                    image.type="image"
+                    image.className="image1"
+                    var img=document.getElementsByClassName('image1').value+=(data.image + '\n');
+                    var gf=document.getElementsByClassName('video1').value+=(data.video + '\n');
+                    div[0].innerHTML+=(gf + "\n");
+                    div[0].innerHTML+=(image + "\n");
+
+                    document.getElementsByClassName('type').value= "";
+
+                    document.getElementById("video").value = "";
+                     document.getElementById("image").value = "";
+                }
+
+            }
+
+            else {
+                for (const [value] of Object.entries(e)) {
+                    document.querySelector('#chat1').className = "message other-message  float-right";
+                    var div = document.getElementsByClassName('message other-message  float-right')
+                    document.getElementsByClassName('pag')[0].innerHTML += (data.message + '\n');
+                     document.getElementById("video").value = "";
+                     document.getElementById("image").value = "";
+                }
+
+            }
+
+        };
+
+        chatSocket.onclose = function (e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-message-input').focus();
+        document.querySelector('#chat-message-input').onkeyup = function (e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#chat-message-submit').click();
+            }
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function (e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const name = document.querySelector('#current_id');
+            const image = document.querySelector('#image');
+            const video = document.querySelector('#video');
+            var image1 = image.value;
+            const message = messageInputDom.value;
+            var id1 = name.value;
+            var video1=video.value;
+
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'id': id1,
+                'image': image1,
+                'video': video1,
+            }));
+            messageInputDom.value = '';
+        };
+    </script>
+
+
+</body>
+
+</html>
